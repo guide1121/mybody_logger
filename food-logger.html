@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulking Log (Daily Update) 📝</title>
+    <style>
+        :root {
+            --primary: #FFD700; /* สีเหลืองทอง */
+            --bg: #121212;
+            --card: #1e1e1e;
+            --text: #ffffff;
+            --input-bg: #2c2c2c;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            margin: 0;
+        }
+        .container {
+            width: 100%;
+            max-width: 420px;
+            background-color: var(--card);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        h2 { text-align: center; color: var(--primary); margin-top: 0; }
+        
+        label { display: block; margin-bottom: 8px; color: #ccc; font-size: 0.9em; }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            background-color: var(--input-bg);
+            color: white;
+            font-size: 16px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+        input:focus { outline: 2px solid var(--primary); border-color: transparent; }
+
+        .macro-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            background-color: var(--primary);
+            color: #000;
+            font-weight: bold;
+            font-size: 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.2s;
+        }
+        button:active { transform: scale(0.98); }
+        button:disabled { background-color: #555; cursor: wait; }
+
+        #status {
+            text-align: center;
+            margin-top: 15px;
+            min-height: 24px;
+            font-size: 0.9em;
+        }
+        .success { color: #4ade80; }
+        .error { color: #ff4d4d; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>💪 บันทึกมื้ออาหาร (ทบยอด)</h2>
+    <p style="text-align: center; color: #888; font-size: 0.8em; margin-bottom: 20px;">
+        ข้อมูลจะถูก "บวกเพิ่ม" เข้าไปในวันที่ปัจจุบันของหน้า Sheet 2
+    </p>
+
+    <form id="foodForm">
+        <label>ชื่อเมนู</label>
+        <input type="text" id="menu" placeholder="เช่น ข้าวมันไก่, นมถั่วเหลือง" required>
+
+        <label>🔥 แคลอรี่ (kcal)</label>
+        <input type="number" id="cal" placeholder="0" required>
+
+        <div class="macro-grid">
+            <div>
+                <label>🥩 โปรตีน</label>
+                <input type="number" id="prot" placeholder="g">
+            </div>
+            <div>
+                <label>🍚 คาร์บ</label>
+                <input type="number" id="carb" placeholder="g">
+            </div>
+            <div>
+                <label>🥑 ไขมัน</label>
+                <input type="number" id="fat" placeholder="g">
+            </div>
+        </div>
+
+        <button type="submit" id="submitBtn">บันทึกข้อมูล</button>
+        <div id="status"></div>
+    </form>
+</div>
+
+<script>
+    // 👇👇 ใส่ URL ที่ได้จาก Google Apps Script ตรงนี้ 👇👇
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw8jk_2W3xDeIBHgijELxRzJFGhCql7vhkg3L56J2Qf6wDe7DOUDv794ARvM_bNdi505w/exec'; 
+
+    const form = document.getElementById('foodForm');
+    const statusDiv = document.getElementById('status');
+    const btn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+        btn.disabled = true;
+        btn.textContent = 'กำลังค้นหาวันที่และอัปเดต... ⏳';
+        statusDiv.textContent = '';
+
+        const data = {
+            menu: document.getElementById('menu').value,
+            cal: document.getElementById('cal').value || 0,
+            prot: document.getElementById('prot').value || 0,
+            carb: document.getElementById('carb').value || 0,
+            fat: document.getElementById('fat').value || 0
+        };
+
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(() => {
+            statusDiv.textContent = '✅ อัปเดตยอดของวันนี้เรียบร้อย!';
+            statusDiv.className = 'success';
+            form.reset();
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.textContent = 'บันทึกข้อมูล';
+                statusDiv.textContent = '';
+            }, 2500);
+        })
+        .catch(error => {
+            console.error(error);
+            statusDiv.textContent = '❌ เกิดข้อผิดพลาด';
+            statusDiv.className = 'error';
+            btn.disabled = false;
+        });
+    });
+</script>
+
+</body>
+</html>
