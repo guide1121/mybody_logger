@@ -1,264 +1,188 @@
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bulking Dashboard 🚀</title>
+    <title>Bulking Dashboard Pro 🚀</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-            --primary: #FFD700;
-            --bg: #121212;
-            --card: #1e1e1e;
-            --text: #ffffff;
-        }
+        :root { --primary: #FFD700; --bg: #121212; --card: #1e1e1e; --text: #ffffff; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: var(--text); padding: 20px; display: flex; justify-content: center; margin: 0; padding-bottom: 50px; }
+        .container { width: 100%; max-width: 420px; }
+        
+        /* การ์ดต่างๆ */
+        .card { background-color: var(--card); padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .prediction-date { font-size: 1.8em; font-weight: bold; color: var(--primary); text-align: center; }
+        .chart-container { height: 250px; }
 
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            margin: 0;
-            padding-bottom: 50px;
-        }
+        /* ตารางประวัติ */
+        .history-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        .history-table th { text-align: left; color: #888; padding-bottom: 10px; border-bottom: 1px solid #333; }
+        .history-table td { padding: 10px 0; border-bottom: 1px solid #2a2a2a; vertical-align: middle; }
+        .status-badge { padding: 4px 8px; border-radius: 6px; font-size: 0.8em; font-weight: bold; display: inline-block; }
+        .status-red { background-color: rgba(255, 77, 77, 0.2); color: #ff4d4d; } /* ขาด */
+        .status-green { background-color: rgba(74, 222, 128, 0.2); color: #4ade80; } /* ครบ */
+        .menu-text { font-size: 0.85em; color: #aaa; margin-top: 3px; display: block; }
 
-        .container {
-            width: 100%;
-            max-width: 420px;
-        }
-
-        /* การ์ดแสดงผลวันที่เป้าหมาย */
-        .prediction-card {
-            background: linear-gradient(135deg, #2d3436, #000000);
-            padding: 20px;
-            border-radius: 15px;
-            text-align: center;
-            margin-bottom: 20px;
-            border: 1px solid #333;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-        }
-
-        .prediction-label {
-            color: #aaa;
-            font-size: 0.9em;
-            margin-bottom: 5px;
-        }
-
-        .prediction-date {
-            font-size: 1.8em;
-            font-weight: bold;
-            color: var(--primary);
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
-        }
-
-        /* ส่วนกราฟ */
-        .chart-container {
-            background-color: var(--card);
-            padding: 15px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            height: 250px;
-        }
-
-        /* ฟอร์มเดิม */
-        .form-card {
-            background-color: var(--card);
-            padding: 25px;
-            border-radius: 15px;
-        }
-
-        h2 {
-            text-align: center;
-            color: var(--primary);
-            margin-top: 0;
-        }
-
-        input {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #444;
-            background-color: #2c2c2c;
-            color: white;
-            margin-bottom: 10px;
-            box-sizing: border-box;
-        }
-
-        .macro-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
-        }
-
-        button {
-            width: 100%;
-            padding: 16px;
-            background-color: var(--primary);
-            color: #000;
-            font-weight: bold;
-            border: none;
-            border-radius: 8px;
-            margin-top: 10px;
-            cursor: pointer;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 0.8em;
-            color: #888;
-        }
-
-        #status {
-            text-align: center;
-            margin-top: 10px;
-            height: 20px;
-        }
-
-        .success {
-            color: #4ade80;
-        }
+        /* ฟอร์ม */
+        input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2c2c2c; color: white; margin-bottom: 10px; box-sizing: border-box; }
+        .macro-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        button { width: 100%; padding: 16px; background: var(--primary); color: black; font-weight: bold; border: none; border-radius: 8px; margin-top: 10px; cursor: pointer; }
+        label { display: block; margin-bottom: 5px; color: #888; font-size: 0.8em; }
+        #status { text-align: center; margin-top: 10px; height: 20px; }
+        .success { color: #4ade80; }
     </style>
 </head>
-
 <body>
 
-    <div class="container">
-        <div class="form-card">
-            <h2>💪 บันทึกมื้ออาหาร</h2>
-            <form id="foodForm">
-                <label>ชื่อเมนู</label>
-                <input type="text" id="menu" placeholder="เช่น ข้าวมันไก่" required>
-                <label>🔥 แคลอรี่</label>
-                <input type="number" id="cal" placeholder="0" required>
-                <div class="macro-grid">
-                    <div><label>โปรตีน</label><input type="number" id="prot" placeholder="g"></div>
-                    <div><label>คาร์บ</label><input type="number" id="carb" placeholder="g"></div>
-                    <div><label>ไขมัน</label><input type="number" id="fat" placeholder="g"></div>
-                </div>
-                <button type="submit" id="submitBtn">บันทึกข้อมูล</button>
-                <div id="status"></div>
-            </form>
-        </div>
-        <br>
-        <div class="prediction-card">
-            <div class="prediction-label">📅 คาดว่าจะถึงเป้าหมายวันที่</div>
-            <div class="prediction-date" id="goalDate">กำลังโหลด...</div>
-        </div>
-
-        <div class="chart-container">
-            <canvas id="myChart"></canvas>
-        </div>
-
-
+<div class="container">
+        <div class="card">
+        <h3 style="margin-top:0; color:var(--primary);">📝 บันทึกมื้ออาหาร</h3>
+        <form id="foodForm">
+            <label>ชื่อเมนู</label>
+            <input type="text" id="menu" placeholder="เช่น ข้าวมันไก่" required>
+            <label>🔥 แคลอรี่</label>
+            <input type="number" id="cal" placeholder="0" required>
+            <div class="macro-grid">
+                <div><label>โปรตีน</label><input type="number" id="prot" placeholder="g"></div>
+                <div><label>คาร์บ</label><input type="number" id="carb" placeholder="g"></div>
+                <div><label>ไขมัน</label><input type="number" id="fat" placeholder="g"></div>
+            </div>
+            <button type="submit" id="submitBtn">บันทึกข้อมูล</button>
+            <div id="status"></div>
+        </form>
+    </div>
+    <br>
+    <div class="card">
+        <div style="text-align: center; color: #aaa; font-size: 0.9em;">📅 คาดว่าจะถึงเป้าหมายวันที่</div>
+        <div class="prediction-date" id="goalDate">...</div>
     </div>
 
-    <script>
-        // 👇👇 ใส่ URL เดิมของคุณที่นี่ 👇👇
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw8jk_2W3xDeIBHgijELxRzJFGhCql7vhkg3L56J2Qf6wDe7DOUDv794ARvM_bNdi505w/exec';
+    <div class="card chart-container">
+        <canvas id="myChart"></canvas>
+    </div>
 
-        // --- 1. โหลดข้อมูลกราฟและวันที่เมื่อเปิดเว็บ ---
-        async function loadDashboard() {
-            try {
-                const response = await fetch(SCRIPT_URL);
-                const data = await response.json();
+    <div class="card">
+        <h3 style="margin-top:0; color:var(--primary);">📜 ย้อนหลัง 7 วัน</h3>
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th width="20%">วันที่</th>
+                    <th width="40%">รายการ</th>
+                    <th width="40%" style="text-align:right;">ผลลัพธ์</th>
+                </tr>
+            </thead>
+            <tbody id="historyList">
+                </tbody>
+        </table>
+    </div>
 
-                // อัปเดตวันที่
-                document.getElementById('goalDate').textContent = data.successDate || "ยังไม่มีข้อมูล";
 
-                // วาดกราฟ
-                renderChart(data.chartData);
+</div>
 
-            } catch (error) {
-                console.error("Load error:", error);
-                document.getElementById('goalDate').textContent = "เชื่อมต่อไม่ได้";
+<script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw8jk_2W3xDeIBHgijELxRzJFGhCql7vhkg3L56J2Qf6wDe7DOUDv794ARvM_bNdi505w/exec'; // ⚠️ ใส่ URL ของคุณที่นี่
+
+    async function loadDashboard() {
+        try {
+            const response = await fetch(SCRIPT_URL);
+            const data = await response.json();
+            
+            // 1. วันที่เป้าหมาย
+            document.getElementById('goalDate').textContent = data.successDate || "-";
+
+            // 2. วาดกราฟ
+            renderChart(data.chartData);
+
+            // 3. วาดตารางประวัติ (ส่วนใหม่)
+            renderHistory(data.chartData);
+
+        } catch (error) { console.error(error); }
+    }
+
+    function renderHistory(data) {
+        const tbody = document.getElementById('historyList');
+        tbody.innerHTML = ''; // ล้างของเก่า
+
+        // วนลูปย้อนกลับ (เอาวันล่าสุดขึ้นก่อน)
+        for (let i = data.labels.length - 1; i >= 0; i--) {
+            const date = data.labels[i];
+            const menu = data.menus[i] || "-";
+            const cal = data.cals[i];
+            const diff = data.statuses[i]; // ค่าส่วนต่าง
+
+            const tr = document.createElement('tr');
+            
+            // ตรรกะสีและข้อความ
+            let statusHtml = '';
+            if (diff >= 0) {
+                statusHtml = `<span class="status-badge status-green">ครบแล้ว (+${diff})</span>`;
+            } else {
+                statusHtml = `<span class="status-badge status-red">ขาด ${Math.abs(diff)}</span>`;
             }
-        }
 
-        function renderChart(data) {
-            const ctx = document.getElementById('myChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: data.labels,
-                    datasets: [
-                        {
-                            label: 'แคลอรี่ (kcal)',
-                            data: data.cals,
-                            backgroundColor: '#FFD700', // สีเหลือง
-                            yAxisID: 'y',
-                            order: 2
-                        },
-                        {
-                            label: 'น้ำหนัก (kg)',
-                            data: data.weights,
-                            borderColor: '#FF6B6B', // สีส้มแดง
-                            backgroundColor: '#FF6B6B',
-                            type: 'line',
-                            yAxisID: 'y1',
-                            order: 1
-                        }
-                    ]
+            tr.innerHTML = `
+                <td><b>${date}</b></td>
+                <td>
+                    <div style="font-weight:bold;">${cal} kcal</div>
+                    <span class="menu-text">${menu.substring(0, 15)}...</span>
+                </td>
+                <td style="text-align:right;">${statusHtml}</td>
+            `;
+            tbody.appendChild(tr);
+        }
+    }
+
+    function renderChart(data) {
+        const ctx = document.getElementById('myChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: data.labels,
+                datasets: [
+                    { label: 'แคลอรี่', data: data.cals, backgroundColor: '#FFD700', borderRadius: 4, order: 2 },
+                    { label: 'น้ำหนัก', data: data.weights, borderColor: '#FF6B6B', type: 'line', yAxisID: 'y1', order: 1 }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: {
+                    y: { display: false },
+                    y1: { position: 'right', grid: { display: false } }
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            display: false // ซ่อนแกนแคลอรี่เพื่อความสะอาด
-                        },
-                        y1: {
-                            type: 'linear',
-                            position: 'right',
-                            grid: { drawOnChartArea: false } // ไม่ตีเส้นทับ
-                        }
-                    },
-                    plugins: {
-                        legend: { labels: { color: 'white' } }
-                    }
-                }
-            });
-        }
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
 
-        // เรียกทำงานทันทีเมื่อเปิดเว็บ
-        loadDashboard();
+    loadDashboard();
 
-        // --- 2. ส่วนบันทึกข้อมูล (เหมือนเดิม) ---
-        const form = document.getElementById('foodForm');
-        const btn = document.getElementById('submitBtn');
-        const statusDiv = document.getElementById('status');
+    // ส่วนบันทึกข้อมูล (เหมือนเดิม)
+    const form = document.getElementById('foodForm');
+    const btn = document.getElementById('submitBtn');
+    const statusDiv = document.getElementById('status');
 
-        form.addEventListener('submit', e => {
-            e.preventDefault();
-            btn.disabled = true;
-            btn.textContent = 'บันทึก...';
-
-            const data = {
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+        btn.disabled = true; btn.textContent = 'บันทึก...';
+        
+        fetch(SCRIPT_URL, {
+            method: 'POST', mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
                 menu: document.getElementById('menu').value,
                 cal: document.getElementById('cal').value || 0,
                 prot: document.getElementById('prot').value || 0,
                 carb: document.getElementById('carb').value || 0,
                 fat: document.getElementById('fat').value || 0
-            };
-
-            fetch(SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            }).then(() => {
-                statusDiv.textContent = '✅ เรียบร้อย! (รีเฟรชเพื่อดูกราฟใหม่)';
-                statusDiv.className = 'success';
-                form.reset();
-                setTimeout(() => { btn.disabled = false; btn.textContent = 'บันทึกข้อมูล'; statusDiv.textContent = ''; }, 2000);
-            });
+            })
+        }).then(() => {
+            statusDiv.textContent = '✅ เรียบร้อย!'; statusDiv.className = 'success';
+            form.reset();
+            setTimeout(() => { btn.disabled = false; btn.textContent = 'บันทึกข้อมูล'; statusDiv.textContent=''; loadDashboard(); }, 2000);
         });
-    </script>
+    });
+</script>
 
 </body>
-
 </html>
